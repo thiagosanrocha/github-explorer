@@ -1,12 +1,25 @@
 import React, { useState, FormEvent, useEffect } from 'react';
+import { AiOutlineLoading } from 'react-icons/ai';
+import { TiDelete } from 'react-icons/ti';
+import { RiDeleteBinLine } from 'react-icons/ri';
+import { FiChevronRight } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 
 import Header from '../../components/Header';
-import Card from '../../components/Card';
 import api from '../../services/api';
 
-import { Container, Form, FormError } from './style';
+import { 
+  Container, 
+  Form, 
+  FormError, 
+  CardContainer, 
+  Avatar, 
+  Info, 
+  Title 
+} from './style';
 
 interface Repository {
+  id: string;
   full_name: string;
   owner: {
     login: string;
@@ -29,6 +42,7 @@ const Dashboard: React.FC = () => {
   });
   const [inputValue, setInputValue] = useState('');
   const [animationIntro, setAnimationIntro] = useState(true); 
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("@Github_Explorer:repositories", JSON.stringify(repositories));
@@ -40,10 +54,21 @@ const Dashboard: React.FC = () => {
     event.preventDefault();
 
     if (inputValue.length === 0) {
-      return setError('O campo não pode estar vazio, digite autor/repositório');
+      return setError('O campo não pode estar vazio, digite autor/repositório.');
+    }
+
+    const findRepository = repositories.find(
+      repository => 
+        inputValue.toLowerCase() === repository.full_name.toLowerCase()
+    );
+
+    if (findRepository) {
+      return setError('Repositório já adicionado, tente outro.');
     }
 
     try {
+      setLoading(true);
+
       const response = await api.get(`/repos/${inputValue}`);
 
       setRepositories([...repositories, response.data]);
@@ -53,8 +78,12 @@ const Dashboard: React.FC = () => {
       setInputValue('');
 
       setAnimationIntro(false);
+
+      setLoading(false);
     } catch (err) {
-      setError('Repositório não encontrado');
+      setLoading(false);
+      
+      setError('Repositório não encontrado.');
     }
   };
 
@@ -70,7 +99,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <Container className="container">
-      <Header btnBack />
+      <Header />
 
       <main>
         <h1>Explore repositórios no Github</h1>
@@ -85,21 +114,37 @@ const Dashboard: React.FC = () => {
             onChange={(event) => setInputValue(event.target.value)}
             placeholder="Digite aqui"
           />
-          <button type="submit">Pesquisar</button>
+          <button type="submit">
+            {loading ? <AiOutlineLoading size={25} /> : 'Pesquisar'}
+          </button>
 
-          { error && <FormError >{error}</FormError> }
+          { error && (
+            <FormError >
+              <TiDelete size={20} />
+              {error}
+            </FormError>
+          )}
         </Form>
 
         {repositories.map((repository, index) => (
-          <Card
-            key={repository.full_name}
-            avatar={repository.owner.avatar_url}
-            owner={repository.owner.login}
-            title={repository.full_name}
-            description={repository.description}
-            linkRepository={repository.html_url}
-            buttonRemove={() => handleRemovingRepository(index)}
-          />
+          <CardContainer key={repository.id}>
+            <Link to={`/repositories/${repository.full_name}`}>
+              <Avatar src={repository.owner.avatar_url} alt={repository.owner.login} />
+
+              <Info>
+                <Title>{repository.full_name}</Title>
+                <p>{repository.description}</p>
+              </Info>
+            </Link>
+
+            <div className="btns">
+              <div className="remove" onClick={() => handleRemovingRepository(index)}>
+                <RiDeleteBinLine size={18} />
+              </div>
+
+              <FiChevronRight size={25} color="#C9C9D4" />
+            </div> 
+          </CardContainer>
         ))}
       </main>
     </Container>

@@ -7,18 +7,18 @@ import logoImg from '../../assets/images/logo.svg';
 import { HeaderContainer } from './style';
 
 interface HeaderProps {
-  btnBack?: boolean;
+  linkBack?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ btnBack }) => {
+const Header: React.FC<HeaderProps> = ({ linkBack }) => {
   return (
     <HeaderContainer>
     <Link to="/" className="logo">
       <img src={logoImg} alt="Github Explorer" />
     </Link>
 
-    {btnBack && (
-      <Link to="/" className="button-back">
+    {linkBack && (
+      <Link to={linkBack} className="button-back">
         <FiChevronLeft size={20} color="#fbfbfb" />
         <span>Voltar</span>
       </Link>
